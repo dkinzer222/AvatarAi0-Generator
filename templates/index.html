@@ -17,12 +17,15 @@
             height: 480px;
             border: 1px solid #ccc;
         }
-        .expression-info {
+        .info-container {
             margin-top: 10px;
             padding: 5px;
             background-color: #f0f0f0;
             border-radius: 5px;
             font-family: Arial, sans-serif;
+        }
+        .expression-info, .gesture-info {
+            margin: 5px 0;
         }
     </style>
 </head>
@@ -35,7 +38,10 @@
         <div class="video-container">
             <h2>Pose Detection</h2>
             <canvas id="poseCanvas"></canvas>
-            <div id="expressionInfo" class="expression-info">Expression: Waiting...</div>
+            <div class="info-container">
+                <div id="expressionInfo" class="expression-info">Expression: Waiting...</div>
+                <div id="gestureInfo" class="gesture-info">Gesture: None</div>
+            </div>
         </div>
         <div class="video-container">
             <h2>3D Avatar</h2>
@@ -49,6 +55,7 @@
         const poseCanvas = document.getElementById('poseCanvas');
         const avatarCanvas = document.getElementById('avatarCanvas');
         const expressionInfo = document.getElementById('expressionInfo');
+        const gestureInfo = document.getElementById('gestureInfo');
         const poseCtx = poseCanvas.getContext('2d');
         const avatarCtx = avatarCanvas.getContext('2d');
 
@@ -99,10 +106,9 @@
             };
             avatarImg.src = data.avatar_frame;
 
-            // Update expression info
-            if (data.expression) {
-                expressionInfo.textContent = `Expression: ${data.expression}`;
-            }
+            // Update expression and gesture info
+            expressionInfo.textContent = `Expression: ${data.expression || 'None'}`;
+            gestureInfo.textContent = `Gesture: ${data.gesture || 'None'}`;
         });
 
         // Start processing when video is ready

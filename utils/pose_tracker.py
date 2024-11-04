@@ -2,6 +2,7 @@ import cv2
 import mediapipe as mp
 import numpy as np
 from .face_tracker import FaceTracker
+from .gesture_recognizer import GestureRecognizer
 
 class PoseTracker:
     def __init__(self):
@@ -9,6 +10,7 @@ class PoseTracker:
         self.mp_drawing = mp.solutions.drawing_utils
         self.mp_drawing_styles = mp.solutions.drawing_styles
         self.face_tracker = FaceTracker()
+        self.gesture_recognizer = GestureRecognizer()
         
         # Configure pose tracking for CPU operation
         self.pose = self.mp_pose.Pose(
@@ -21,9 +23,9 @@ class PoseTracker:
         )
         
     def process_frame(self, frame):
-        """Process a frame and return pose landmarks and face expression"""
+        """Process a frame and return pose landmarks, face expression, and detected gestures"""
         if frame is None or frame.size == 0:
-            return None, None, None, None
+            return None, None, None, None, None
             
         try:
             # Get image dimensions
@@ -56,16 +58,20 @@ class PoseTracker:
                 landmarks = np.array(landmarks)
                 landmarks[:, :2] = np.clip(landmarks[:, :2], 0, 1)
                 
-                return landmarks, face_landmarks, expression, image_rgb
+                # Update gesture recognizer and detect gestures
+                self.gesture_recognizer.add_landmarks(landmarks)
+                gesture = self.gesture_recognizer.detect_gestures()
                 
-            return None, face_landmarks, expression, image_rgb
+                return landmarks, face_landmarks, expression, gesture, image_rgb
+                
+            return None, face_landmarks, expression, None, image_rgb
             
         except Exception as e:
             print(f"Error processing frame: {str(e)}")
-            return None, None, None, None
+            return None, None, None, None, None
         
-    def draw_pose(self, image, landmarks, face_landmarks=None, expression=None):
-        """Draw pose landmarks and facial expression on the image"""
+    def draw_pose(self, image, landmarks, face_landmarks=None, expression=None, gesture=None):
+        """Draw pose landmarks, facial expression, and detected gestures on the image"""
         if landmarks is None or image is None:
             return image
             
@@ -100,10 +106,18 @@ class PoseTracker:
                         cv2.line(image_rgb, start_point, end_point, (255, 0, 0), 2)
             
             # Draw facial expression if available
+            text_y = 30
             if expression:
                 cv2.putText(image_rgb, f"Expression: {expression}", 
-                           (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, 
+                           (10, text_y), cv2.FONT_HERSHEY_SIMPLEX, 1, 
                            (0, 255, 255), 2)
+                text_y += 40
+                
+            # Draw detected gesture if available
+            if gesture:
+                cv2.putText(image_rgb, f"Gesture: {gesture}", 
+                           (10, text_y), cv2.FONT_HERSHEY_SIMPLEX, 1, 
+                           (255, 255, 0), 2)
             
             return cv2.cvtColor(image_rgb, cv2.COLOR_RGB2BGR)
             

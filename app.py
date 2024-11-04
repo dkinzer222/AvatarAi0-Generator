@@ -36,11 +36,11 @@ def handle_video_frame(data):
 
         if frame is not None and frame.size > 0:
             # Process frame with MediaPipe
-            landmarks, face_landmarks, expression, processed_frame = pose_tracker.process_frame(frame)
+            landmarks, face_landmarks, expression, gesture, processed_frame = pose_tracker.process_frame(frame)
             
             if landmarks is not None:
-                # Draw pose landmarks and facial expression on original frame
-                pose_frame = pose_tracker.draw_pose(frame.copy(), landmarks, face_landmarks, expression)
+                # Draw pose landmarks, facial expression, and gestures on original frame
+                pose_frame = pose_tracker.draw_pose(frame.copy(), landmarks, face_landmarks, expression, gesture)
                 
                 # Render SMPL-X avatar
                 avatar_frame = avatar_renderer.render_avatar(landmarks, expression)
@@ -52,11 +52,12 @@ def handle_video_frame(data):
                 _, buffer = cv2.imencode('.jpg', avatar_frame)
                 avatar_data = base64.b64encode(buffer).decode('utf-8')
                 
-                # Send both frames back to client
+                # Send both frames back to client along with expression and gesture
                 emit('processed_frame', {
                     'pose_frame': f'data:image/jpeg;base64,{pose_data}',
                     'avatar_frame': f'data:image/jpeg;base64,{avatar_data}',
-                    'expression': expression
+                    'expression': expression,
+                    'gesture': gesture
                 })
     except Exception as e:
         print(f"Error processing frame: {str(e)}")
