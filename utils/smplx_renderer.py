@@ -8,6 +8,12 @@ class SMPLXRenderer:
         self.prev_landmarks = None
         self.interpolation_frames = 5
         self.scale = 200
+        # Add customization parameters
+        self.avatar_color = (200, 200, 200)  # Default color (RGB)
+        self.avatar_size = 1.0  # Scale factor
+        self.line_thickness = 2
+        self.joint_size = 1.0
+        self.style = "solid"  # solid, dashed, or gradient
         self.expression_colors = {
             'neutral': (200, 200, 200),
             'closed_eyes': (255, 165, 0),
@@ -15,6 +21,19 @@ class SMPLXRenderer:
             'raised_eyebrows': (255, 0, 255),
             'frown': (128, 0, 128)
         }
+        
+    def set_customization(self, color=None, size=None, style=None, line_thickness=None, joint_size=None):
+        """Update avatar customization parameters"""
+        if color is not None:
+            self.avatar_color = color
+        if size is not None:
+            self.avatar_size = max(0.5, min(2.0, float(size)))
+        if style is not None and style in ["solid", "dashed", "gradient"]:
+            self.style = style
+        if line_thickness is not None:
+            self.line_thickness = max(1, min(5, int(line_thickness)))
+        if joint_size is not None:
+            self.joint_size = max(0.5, min(2.0, float(joint_size)))
         
     def render_avatar(self, landmarks, expression=None):
         """Render a simplified 3D skeleton avatar using MediaPipe landmarks"""
@@ -28,9 +47,12 @@ class SMPLXRenderer:
         positions = landmarks[:, :3]
         visibility = landmarks[:, 3]
         
+        # Apply size scaling
+        positions = positions * self.avatar_size
+        
         # Perform interpolation if we have previous landmarks
         if self.prev_landmarks is not None:
-            prev_positions = self.prev_landmarks[:, :3]
+            prev_positions = self.prev_landmarks[:, :3] * self.avatar_size
             interpolated_frames = self._interpolate_poses(prev_positions, positions)
             image = self._render_3d_skeleton(interpolated_frames[-1], visibility, expression)
         else:
@@ -42,10 +64,10 @@ class SMPLXRenderer:
         return image
             
     def _render_3d_skeleton(self, landmarks, visibility, expression=None):
-        """Render an enhanced 3D skeleton with depth visualization and facial expression"""
+        """Render an enhanced 3D skeleton with customization options"""
         image = np.zeros((self.height, self.width, 3), dtype=np.uint8)
         
-        # Define enhanced connections for better visualization
+        # Define enhanced connections
         connections = [
             # Torso
             (11, 12), (11, 23), (12, 24), (23, 24),
@@ -64,48 +86,87 @@ class SMPLXRenderer:
         # Project 3D points to 2D with perspective
         points_2d = self._project_3d_to_2d(landmarks)
         
-        # Draw connections with depth-based coloring
+        # Draw connections with customized style
         for start_idx, end_idx in connections:
             if start_idx < len(points_2d) and end_idx < len(points_2d):
                 if visibility[start_idx] > 0.5 and visibility[end_idx] > 0.5:
                     start = tuple(points_2d[start_idx].astype(int))
                     end = tuple(points_2d[end_idx].astype(int))
                     
-                    # Calculate depth for color gradient
+                    # Calculate color based on style and depth
                     z_avg = (landmarks[start_idx][2] + landmarks[end_idx][2]) / 2
-                    color_intensity = int(255 * (1 + z_avg))
-                    
-                    # Use expression color for face connections if expression is detected
-                    if expression and (start_idx < 11 or end_idx < 11):  # Face landmarks
-                        color = self.expression_colors.get(expression, (0, min(255, color_intensity), min(255, color_intensity + 50)))
+                    if self.style == "gradient":
+                        color_intensity = int(255 * (1 + z_avg))
+                        color = (
+                            min(255, self.avatar_color[0] * (1 + z_avg)),
+                            min(255, self.avatar_color[1] * (1 + z_avg)),
+                            min(255, self.avatar_color[2] * (1 + z_avg))
+                        )
                     else:
-                        color = (0, min(255, color_intensity), min(255, color_intensity + 50))
-                    
-                    cv2.line(image, start, end, color, 2, cv2.LINE_AA)
+                        color = self.avatar_color
+
+                    # Draw line based on style
+                    if self.style == "dashed":
+                        self._draw_dashed_line(image, start, end, color, self.line_thickness)
+                    else:
+                        cv2.line(image, start, end, color, self.line_thickness, cv2.LINE_AA)
         
-        # Draw joints with depth-based size
+        # Draw joints with customized size
         for i, (point, vis) in enumerate(zip(points_2d, visibility)):
             if vis > 0.5:
-                point = tuple(point.astype(int))
+                point = tuple(map(int, point))
                 z_depth = landmarks[i][2]
-                radius = int(5 * (1 + z_depth))
                 
-                # Use expression color for face joints
-                if expression and i < 11:  # Face landmarks
-                    color = self.expression_colors.get(expression, (255, 0, 0))
+                # Ensure radius is positive and within reasonable bounds
+                radius = max(1, min(20, int(5 * self.joint_size * (1 + z_depth))))
+                
+                if i < 11 and expression:  # Face landmarks with expression color
+                    color = self.expression_colors.get(expression, self.avatar_color)
                 else:
-                    color_intensity = int(255 * vis)
-                    color = (color_intensity, 0, 0)
+                    color = self.avatar_color
                 
-                cv2.circle(image, point, radius, color, -1, cv2.LINE_AA)
+                # Check if point is within image bounds
+                if (0 <= point[0] < self.width and 0 <= point[1] < self.height):
+                    cv2.circle(image, point, radius, color, -1, cv2.LINE_AA)
         
-        # Add expression text
-        if expression:
-            cv2.putText(image, f"Expression: {expression}", 
-                       (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, 
-                       self.expression_colors.get(expression, (255, 255, 255)), 2)
+        # Add customization info
+        cv2.putText(image, f"Style: {self.style}", 
+                    (10, self.height - 60), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 
+                    (255, 255, 255), 1)
         
         return image
+    
+    def _draw_dashed_line(self, image, start, end, color, thickness):
+        """Draw a dashed line between two points"""
+        dash_length = 10
+        gap_length = 5
+        
+        dx = end[0] - start[0]
+        dy = end[1] - start[1]
+        dist = np.sqrt(dx*dx + dy*dy)
+        
+        if dist == 0:
+            return
+            
+        dx = dx/dist
+        dy = dy/dist
+        
+        curr_x, curr_y = start
+        step = dash_length + gap_length
+        
+        while dist > 0:
+            next_x = int(curr_x + dx * min(dash_length, dist))
+            next_y = int(curr_y + dy * min(dash_length, dist))
+            
+            # Check if points are within image bounds
+            if (0 <= int(curr_x) < self.width and 0 <= int(curr_y) < self.height and
+                0 <= next_x < self.width and 0 <= next_y < self.height):
+                cv2.line(image, (int(curr_x), int(curr_y)), (next_x, next_y), 
+                        color, thickness, cv2.LINE_AA)
+            
+            curr_x = curr_x + dx * step
+            curr_y = curr_y + dy * step
+            dist -= step
     
     def _project_3d_to_2d(self, points_3d):
         """Project 3D points to 2D space with perspective effect"""

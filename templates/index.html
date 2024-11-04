@@ -6,17 +6,35 @@
     <style>
         .container {
             display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 20px;
-            padding: 20px;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
         }
+
+        @media (min-width: 768px) {
+            .container {
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 20px;
+                padding: 20px;
+            }
+        }
+
         .video-container {
-            flex: 1;
-            min-width: 300px;
+            width: 100%;
             max-width: 640px;
-            position: relative;
+            margin-bottom: 20px;
         }
+
+        @media (min-width: 768px) {
+            .video-container {
+                flex: 1;
+                min-width: 300px;
+                margin-bottom: 0;
+            }
+        }
+
         video, canvas {
             width: 100%;
             height: auto;
@@ -24,6 +42,7 @@
             object-fit: contain;
             border: 1px solid #ccc;
         }
+
         .info-container {
             margin-top: 10px;
             padding: 5px;
@@ -31,9 +50,11 @@
             border-radius: 5px;
             font-family: Arial, sans-serif;
         }
+
         .expression-info, .gesture-info {
             margin: 5px 0;
         }
+
         .error-message {
             position: fixed;
             top: 20px;
@@ -45,6 +66,7 @@
             border-radius: 5px;
             z-index: 1000;
         }
+
         .loading {
             position: absolute;
             top: 0;
@@ -57,6 +79,49 @@
             align-items: center;
             color: white;
             font-weight: bold;
+        }
+
+        .customization-panel {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            background: #f8f8f8;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+
+        .customization-group {
+            margin-bottom: 10px;
+        }
+
+        .customization-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .customization-group input,
+        .customization-group select {
+            max-width: 100%;
+            height: 40px;
+            margin-bottom: 15px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 30px;
+            margin: 10px 0;
+        }
+
+        select {
+            padding: 8px;
+            font-size: 16px;
+        }
+
+        input[type="color"] {
+            width: 100%;
+            padding: 0;
+            border: none;
         }
     </style>
 </head>
@@ -80,6 +145,33 @@
             <h2>3D Avatar</h2>
             <canvas id="avatarCanvas"></canvas>
             <div id="avatarLoading" class="loading" style="display: none;">Rendering avatar...</div>
+            <div class="customization-panel">
+                <h3>Avatar Customization</h3>
+                <div class="customization-group">
+                    <label for="avatarColor">Avatar Color</label>
+                    <input type="color" id="avatarColor" value="#c8c8c8">
+                </div>
+                <div class="customization-group">
+                    <label for="avatarSize">Avatar Size</label>
+                    <input type="range" id="avatarSize" min="0.5" max="2" step="0.1" value="1">
+                </div>
+                <div class="customization-group">
+                    <label for="avatarStyle">Line Style</label>
+                    <select id="avatarStyle">
+                        <option value="solid">Solid</option>
+                        <option value="dashed">Dashed</option>
+                        <option value="gradient">Gradient</option>
+                    </select>
+                </div>
+                <div class="customization-group">
+                    <label for="lineThickness">Line Thickness</label>
+                    <input type="range" id="lineThickness" min="1" max="5" step="1" value="2">
+                </div>
+                <div class="customization-group">
+                    <label for="jointSize">Joint Size</label>
+                    <input type="range" id="jointSize" min="0.5" max="2" step="0.1" value="1">
+                </div>
+            </div>
         </div>
     </div>
 
@@ -93,6 +185,43 @@
         const poseCtx = poseCanvas.getContext('2d');
         const avatarCtx = avatarCanvas.getContext('2d');
 
+        // Customization controls
+        const avatarColor = document.getElementById('avatarColor');
+        const avatarSize = document.getElementById('avatarSize');
+        const avatarStyle = document.getElementById('avatarStyle');
+        const lineThickness = document.getElementById('lineThickness');
+        const jointSize = document.getElementById('jointSize');
+
+        function updateAvatarCustomization() {
+            socket.emit('update_avatar', {
+                color: avatarColor.value,
+                size: avatarSize.value,
+                style: avatarStyle.value,
+                lineThickness: lineThickness.value,
+                jointSize: jointSize.value
+            });
+        }
+
+        // Add event listeners for both mouse and touch events
+        const addEventListeners = (element, handlers) => {
+            if (handlers.change) element.addEventListener('change', handlers.change);
+            if (handlers.input) {
+                element.addEventListener('input', handlers.input);
+                element.addEventListener('touchmove', handlers.input);
+            }
+            if (handlers.touch) {
+                element.addEventListener('touchstart', handlers.touch);
+                element.addEventListener('touchend', handlers.touch);
+            }
+        };
+
+        // Add event listeners for customization controls
+        addEventListeners(avatarColor, { change: updateAvatarCustomization });
+        addEventListeners(avatarSize, { input: updateAvatarCustomization });
+        addEventListeners(avatarStyle, { change: updateAvatarCustomization });
+        addEventListeners(lineThickness, { input: updateAvatarCustomization });
+        addEventListeners(jointSize, { input: updateAvatarCustomization });
+
         function showLoading(container) {
             document.getElementById(container + 'Loading').style.display = 'flex';
         }
@@ -101,12 +230,32 @@
             document.getElementById(container + 'Loading').style.display = 'none';
         }
 
+        // Handle window resizing
+        function handleResize() {
+            if (video.videoWidth && video.videoHeight) {
+                const aspectRatio = video.videoWidth / video.videoHeight;
+                const maxWidth = Math.min(640, window.innerWidth - 40);
+                const width = maxWidth;
+                const height = width / aspectRatio;
+
+                [poseCanvas, avatarCanvas].forEach(canvas => {
+                    canvas.width = width;
+                    canvas.height = height;
+                });
+            }
+        }
+
+        window.addEventListener('resize', handleResize);
+
         // Set up webcam
         showLoading('webcam');
         navigator.mediaDevices.getUserMedia({ video: true })
             .then(stream => {
                 video.srcObject = stream;
-                hideLoading('webcam');
+                video.onloadedmetadata = () => {
+                    hideLoading('webcam');
+                    handleResize();
+                };
             })
             .catch(err => {
                 console.error('Error accessing webcam:', err);
@@ -116,11 +265,18 @@
         // Handle socket connection
         socket.on('connect', () => {
             console.log('Connected to server');
+            updateAvatarCustomization();
         });
 
         socket.on('error', (error) => {
             console.error('Socket error:', error);
             showError('Connection error. Retrying...');
+        });
+
+        socket.on('customization_updated', (response) => {
+            if (response.status === 'error') {
+                showError('Error updating avatar: ' + response.message);
+            }
         });
 
         function showError(message) {
@@ -141,14 +297,12 @@
                 showLoading('pose');
                 showLoading('avatar');
                 
-                // Create a temporary canvas to capture the video frame
                 const tempCanvas = document.createElement('canvas');
                 tempCanvas.width = video.videoWidth;
                 tempCanvas.height = video.videoHeight;
                 const tempCtx = tempCanvas.getContext('2d');
                 tempCtx.drawImage(video, 0, 0);
 
-                // Convert the frame to base64 and send to server
                 const dataURL = tempCanvas.toDataURL('image/jpeg');
                 socket.emit('video_frame', dataURL);
             }
@@ -182,10 +336,7 @@
 
         // Start processing when video is ready
         video.onloadeddata = () => {
-            poseCanvas.width = video.videoWidth;
-            poseCanvas.height = video.videoHeight;
-            avatarCanvas.width = video.videoWidth;
-            avatarCanvas.height = video.videoHeight;
+            handleResize();
             processFrame();
         };
     </script>

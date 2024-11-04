@@ -26,6 +26,30 @@ def handle_connect():
 def handle_disconnect():
     print("Client disconnected")
 
+@socketio.on('update_avatar')
+def handle_avatar_update(data):
+    try:
+        # Convert color from hex to RGB
+        if 'color' in data:
+            hex_color = data['color'].lstrip('#')
+            rgb_color = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+            avatar_renderer.set_customization(color=rgb_color)
+            
+        # Update other customization options
+        if 'size' in data:
+            avatar_renderer.set_customization(size=float(data['size']))
+        if 'style' in data:
+            avatar_renderer.set_customization(style=data['style'])
+        if 'lineThickness' in data:
+            avatar_renderer.set_customization(line_thickness=int(data['lineThickness']))
+        if 'jointSize' in data:
+            avatar_renderer.set_customization(joint_size=float(data['jointSize']))
+            
+        emit('customization_updated', {'status': 'success'})
+    except Exception as e:
+        print(f"Error updating avatar: {str(e)}")
+        emit('customization_updated', {'status': 'error', 'message': str(e)})
+
 @socketio.on('video_frame')
 def handle_video_frame(data):
     try:
