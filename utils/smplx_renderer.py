@@ -7,9 +7,16 @@ class SMPLXRenderer:
         self.height = 480
         self.prev_landmarks = None
         self.interpolation_frames = 5
-        self.scale = 200  # Scale factor for 3D to 2D projection
+        self.scale = 200
+        self.expression_colors = {
+            'neutral': (200, 200, 200),
+            'closed_eyes': (255, 165, 0),
+            'open_mouth': (0, 255, 255),
+            'raised_eyebrows': (255, 0, 255),
+            'frown': (128, 0, 128)
+        }
         
-    def render_avatar(self, landmarks):
+    def render_avatar(self, landmarks, expression=None):
         """Render a simplified 3D skeleton avatar using MediaPipe landmarks"""
         if landmarks is None:
             return np.zeros((self.height, self.width, 3), dtype=np.uint8)
@@ -18,24 +25,24 @@ class SMPLXRenderer:
         image = np.zeros((self.height, self.width, 3), dtype=np.uint8)
         
         # Extract position and visibility data
-        positions = landmarks[:, :3]  # x, y, z
-        visibility = landmarks[:, 3]  # visibility values
+        positions = landmarks[:, :3]
+        visibility = landmarks[:, 3]
         
         # Perform interpolation if we have previous landmarks
         if self.prev_landmarks is not None:
             prev_positions = self.prev_landmarks[:, :3]
             interpolated_frames = self._interpolate_poses(prev_positions, positions)
-            image = self._render_3d_skeleton(interpolated_frames[-1], visibility)
+            image = self._render_3d_skeleton(interpolated_frames[-1], visibility, expression)
         else:
-            image = self._render_3d_skeleton(positions, visibility)
+            image = self._render_3d_skeleton(positions, visibility, expression)
         
         # Store current landmarks for next frame
         self.prev_landmarks = landmarks.copy()
         
         return image
             
-    def _render_3d_skeleton(self, landmarks, visibility):
-        """Render an enhanced 3D skeleton with depth visualization"""
+    def _render_3d_skeleton(self, landmarks, visibility, expression=None):
+        """Render an enhanced 3D skeleton with depth visualization and facial expression"""
         image = np.zeros((self.height, self.width, 3), dtype=np.uint8)
         
         # Define enhanced connections for better visualization
@@ -67,7 +74,12 @@ class SMPLXRenderer:
                     # Calculate depth for color gradient
                     z_avg = (landmarks[start_idx][2] + landmarks[end_idx][2]) / 2
                     color_intensity = int(255 * (1 + z_avg))
-                    color = (0, min(255, color_intensity), min(255, color_intensity + 50))
+                    
+                    # Use expression color for face connections if expression is detected
+                    if expression and (start_idx < 11 or end_idx < 11):  # Face landmarks
+                        color = self.expression_colors.get(expression, (0, min(255, color_intensity), min(255, color_intensity + 50)))
+                    else:
+                        color = (0, min(255, color_intensity), min(255, color_intensity + 50))
                     
                     cv2.line(image, start, end, color, 2, cv2.LINE_AA)
         
@@ -77,8 +89,21 @@ class SMPLXRenderer:
                 point = tuple(point.astype(int))
                 z_depth = landmarks[i][2]
                 radius = int(5 * (1 + z_depth))
-                color_intensity = int(255 * vis)
-                cv2.circle(image, point, radius, (color_intensity, 0, 0), -1, cv2.LINE_AA)
+                
+                # Use expression color for face joints
+                if expression and i < 11:  # Face landmarks
+                    color = self.expression_colors.get(expression, (255, 0, 0))
+                else:
+                    color_intensity = int(255 * vis)
+                    color = (color_intensity, 0, 0)
+                
+                cv2.circle(image, point, radius, color, -1, cv2.LINE_AA)
+        
+        # Add expression text
+        if expression:
+            cv2.putText(image, f"Expression: {expression}", 
+                       (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, 
+                       self.expression_colors.get(expression, (255, 255, 255)), 2)
         
         return image
     

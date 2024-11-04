@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>3D Avatar with Pose Tracking</title>
+    <title>3D Avatar with Pose and Expression Tracking</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <style>
         .container {
@@ -17,6 +17,13 @@
             height: 480px;
             border: 1px solid #ccc;
         }
+        .expression-info {
+            margin-top: 10px;
+            padding: 5px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            font-family: Arial, sans-serif;
+        }
     </style>
 </head>
 <body>
@@ -28,6 +35,7 @@
         <div class="video-container">
             <h2>Pose Detection</h2>
             <canvas id="poseCanvas"></canvas>
+            <div id="expressionInfo" class="expression-info">Expression: Waiting...</div>
         </div>
         <div class="video-container">
             <h2>3D Avatar</h2>
@@ -40,6 +48,7 @@
         const video = document.getElementById('webcam');
         const poseCanvas = document.getElementById('poseCanvas');
         const avatarCanvas = document.getElementById('avatarCanvas');
+        const expressionInfo = document.getElementById('expressionInfo');
         const poseCtx = poseCanvas.getContext('2d');
         const avatarCtx = avatarCanvas.getContext('2d');
 
@@ -89,6 +98,11 @@
                 avatarCtx.drawImage(avatarImg, 0, 0, avatarCanvas.width, avatarCanvas.height);
             };
             avatarImg.src = data.avatar_frame;
+
+            // Update expression info
+            if (data.expression) {
+                expressionInfo.textContent = `Expression: ${data.expression}`;
+            }
         });
 
         // Start processing when video is ready

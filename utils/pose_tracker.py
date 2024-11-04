@@ -1,17 +1,19 @@
 import cv2
 import mediapipe as mp
 import numpy as np
+from .face_tracker import FaceTracker
 
 class PoseTracker:
     def __init__(self):
         self.mp_pose = mp.solutions.pose
         self.mp_drawing = mp.solutions.drawing_utils
         self.mp_drawing_styles = mp.solutions.drawing_styles
+        self.face_tracker = FaceTracker()
         
         # Configure pose tracking for CPU operation
         self.pose = self.mp_pose.Pose(
             static_image_mode=False,
-            model_complexity=1,  # Using medium complexity for better performance
+            model_complexity=1,
             smooth_landmarks=True,
             enable_segmentation=False,
             min_detection_confidence=0.5,
@@ -19,9 +21,9 @@ class PoseTracker:
         )
         
     def process_frame(self, frame):
-        """Process a frame and return pose landmarks"""
+        """Process a frame and return pose landmarks and face expression"""
         if frame is None or frame.size == 0:
-            return None, None
+            return None, None, None, None
             
         try:
             # Get image dimensions
@@ -32,36 +34,38 @@ class PoseTracker:
             
             # Process the frame with MediaPipe
             image_rgb.flags.writeable = False
-            results = self.pose.process(image_rgb)
+            pose_results = self.pose.process(image_rgb)
+            
+            # Process face landmarks
+            face_landmarks = self.face_tracker.process_frame(frame)
+            expression = self.face_tracker.detect_expression(face_landmarks) if face_landmarks is not None else None
+            
             image_rgb.flags.writeable = True
             
-            if results.pose_landmarks:
+            if pose_results.pose_landmarks:
                 # Convert landmarks to numpy array with better normalization
                 landmarks = []
-                for landmark in results.pose_landmarks.landmark:
-                    # Normalize coordinates to image dimensions
+                for landmark in pose_results.pose_landmarks.landmark:
                     x = landmark.x
                     y = landmark.y
-                    z = landmark.z * width  # Scale Z coordinate relative to image width
+                    z = landmark.z * width
                     visibility = landmark.visibility if hasattr(landmark, 'visibility') else 1.0
                     
                     landmarks.append([x, y, z, visibility])
                 
                 landmarks = np.array(landmarks)
-                
-                # Ensure landmarks are within bounds
                 landmarks[:, :2] = np.clip(landmarks[:, :2], 0, 1)
                 
-                return landmarks, image_rgb
+                return landmarks, face_landmarks, expression, image_rgb
                 
-            return None, image_rgb
+            return None, face_landmarks, expression, image_rgb
             
         except Exception as e:
             print(f"Error processing frame: {str(e)}")
-            return None, None
+            return None, None, None, None
         
-    def draw_pose(self, image, landmarks):
-        """Draw pose landmarks on the image"""
+    def draw_pose(self, image, landmarks, face_landmarks=None, expression=None):
+        """Draw pose landmarks and facial expression on the image"""
         if landmarks is None or image is None:
             return image
             
@@ -69,17 +73,16 @@ class PoseTracker:
             # Convert BGR to RGB for consistency
             image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             
-            # Draw landmarks manually with error checking
+            # Draw pose landmarks
             height, width = image_rgb.shape[:2]
             for i, (x, y, z, v) in enumerate(landmarks):
-                if v > 0.5:  # Only draw visible landmarks
+                if v > 0.5:
                     px = int(x * width)
                     py = int(y * height)
-                    # Ensure points are within image bounds
                     if 0 <= px < width and 0 <= py < height:
                         cv2.circle(image_rgb, (px, py), 5, (0, 255, 0), -1)
                     
-            # Draw connections with bounds checking
+            # Draw connections
             for connection in self.mp_pose.POSE_CONNECTIONS:
                 start_idx = connection[0]
                 end_idx = connection[1]
@@ -92,10 +95,15 @@ class PoseTracker:
                     end_point = (int(landmarks[end_idx][0] * width),
                                 int(landmarks[end_idx][1] * height))
                     
-                    # Check if points are within image bounds
                     if (0 <= start_point[0] < width and 0 <= start_point[1] < height and
                         0 <= end_point[0] < width and 0 <= end_point[1] < height):
                         cv2.line(image_rgb, start_point, end_point, (255, 0, 0), 2)
+            
+            # Draw facial expression if available
+            if expression:
+                cv2.putText(image_rgb, f"Expression: {expression}", 
+                           (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, 
+                           (0, 255, 255), 2)
             
             return cv2.cvtColor(image_rgb, cv2.COLOR_RGB2BGR)
             

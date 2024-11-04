@@ -28,4 +28,5 @@ dependencies = [
     "pillow",
     "protobuf",
     "python-socketio>=5.11.4",
+    "websockets",
 ]
