@@ -82,11 +82,13 @@ class PoseTracker:
             # Draw pose landmarks
             height, width = image_rgb.shape[:2]
             for i, (x, y, z, v) in enumerate(landmarks):
-                if v > 0.5:
+                if v > 0.5:  # Only draw visible landmarks
                     px = int(x * width)
                     py = int(y * height)
-                    if 0 <= px < width and 0 <= py < height:
-                        cv2.circle(image_rgb, (px, py), 5, (0, 255, 0), -1)
+                    # Ensure radius is positive and within bounds
+                    radius = max(1, min(20, int(abs(5 * (1 + z)))))  # Fixed radius calculation
+                    if 0 <= px < width and 0 <= py < height and radius > 0:
+                        cv2.circle(image_rgb, (px, py), radius, (0, 255, 0), -1)
                     
             # Draw connections
             for connection in self.mp_pose.POSE_CONNECTIONS:

@@ -6,15 +6,22 @@
     <style>
         .container {
             display: flex;
-            justify-content: space-around;
-            margin: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            padding: 20px;
         }
         .video-container {
-            text-align: center;
+            flex: 1;
+            min-width: 300px;
+            max-width: 640px;
+            position: relative;
         }
         video, canvas {
-            width: 640px;
-            height: 480px;
+            width: 100%;
+            height: auto;
+            aspect-ratio: 4/3;
+            object-fit: contain;
             border: 1px solid #ccc;
         }
         .info-container {
@@ -27,6 +34,30 @@
         .expression-info, .gesture-info {
             margin: 5px 0;
         }
+        .error-message {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #ff4444;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            z-index: 1000;
+        }
+        .loading {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -34,10 +65,12 @@
         <div class="video-container">
             <h2>Webcam Feed</h2>
             <video id="webcam" autoplay playsinline></video>
+            <div id="webcamLoading" class="loading" style="display: none;">Loading webcam...</div>
         </div>
         <div class="video-container">
             <h2>Pose Detection</h2>
             <canvas id="poseCanvas"></canvas>
+            <div id="poseLoading" class="loading" style="display: none;">Processing pose...</div>
             <div class="info-container">
                 <div id="expressionInfo" class="expression-info">Expression: Waiting...</div>
                 <div id="gestureInfo" class="gesture-info">Gesture: None</div>
@@ -46,6 +79,7 @@
         <div class="video-container">
             <h2>3D Avatar</h2>
             <canvas id="avatarCanvas"></canvas>
+            <div id="avatarLoading" class="loading" style="display: none;">Rendering avatar...</div>
         </div>
     </div>
 
@@ -59,21 +93,54 @@
         const poseCtx = poseCanvas.getContext('2d');
         const avatarCtx = avatarCanvas.getContext('2d');
 
+        function showLoading(container) {
+            document.getElementById(container + 'Loading').style.display = 'flex';
+        }
+
+        function hideLoading(container) {
+            document.getElementById(container + 'Loading').style.display = 'none';
+        }
+
         // Set up webcam
+        showLoading('webcam');
         navigator.mediaDevices.getUserMedia({ video: true })
             .then(stream => {
                 video.srcObject = stream;
+                hideLoading('webcam');
             })
-            .catch(err => console.error('Error accessing webcam:', err));
+            .catch(err => {
+                console.error('Error accessing webcam:', err);
+                showError('Could not access webcam. Please check permissions.');
+            });
 
         // Handle socket connection
         socket.on('connect', () => {
             console.log('Connected to server');
         });
 
+        socket.on('error', (error) => {
+            console.error('Socket error:', error);
+            showError('Connection error. Retrying...');
+        });
+
+        function showError(message) {
+            const existingError = document.querySelector('.error-message');
+            if (existingError) {
+                existingError.remove();
+            }
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.textContent = message;
+            document.body.appendChild(errorDiv);
+            setTimeout(() => errorDiv.remove(), 5000);
+        }
+
         // Process and send video frames
         function processFrame() {
             if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                showLoading('pose');
+                showLoading('avatar');
+                
                 // Create a temporary canvas to capture the video frame
                 const tempCanvas = document.createElement('canvas');
                 tempCanvas.width = video.videoWidth;
@@ -95,6 +162,7 @@
             poseImg.onload = () => {
                 poseCtx.clearRect(0, 0, poseCanvas.width, poseCanvas.height);
                 poseCtx.drawImage(poseImg, 0, 0, poseCanvas.width, poseCanvas.height);
+                hideLoading('pose');
             };
             poseImg.src = data.pose_frame;
 
@@ -103,6 +171,7 @@
             avatarImg.onload = () => {
                 avatarCtx.clearRect(0, 0, avatarCanvas.width, avatarCanvas.height);
                 avatarCtx.drawImage(avatarImg, 0, 0, avatarCanvas.width, avatarCanvas.height);
+                hideLoading('avatar');
             };
             avatarImg.src = data.avatar_frame;
 
