@@ -1352,6 +1352,7 @@ dependencies = [
     { name = "torch" },
     { name = "trimesh" },
     { name = "websockets" },
+    { name = "werkzeug" },
 ]
 
 [package.metadata]
@@ -1382,6 +1383,7 @@ requires-dist = [
     { name = "torch" },
     { name = "trimesh" },
     { name = "websockets" },
+    { name = "werkzeug" },
 ]
 
 [[package]]

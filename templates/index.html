@@ -87,45 +87,159 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.85);
             color: white;
             padding: 20px;
-            border-radius: 10px;
+            border-radius: 15px;
             text-align: center;
             z-index: 100;
             width: 80%;
             max-width: 400px;
+            font-family: Arial, sans-serif;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .calibration-overlay h3 {
+            color: #4CAF50;
+            margin: 0 0 15px 0;
+            font-size: 24px;
+        }
+
+        .calibration-text {
+            font-size: 18px;
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+
+        .calibration-details {
+            text-align: left;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+
+        .calibration-details ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .calibration-details li {
+            margin: 8px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .calibration-details li:before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: #4CAF50;
         }
 
         .calibration-progress {
             width: 100%;
             height: 20px;
-            background-color: #444;
+            background-color: rgba(255, 255, 255, 0.1);
             border-radius: 10px;
-            margin: 10px 0;
+            margin: 15px 0;
             overflow: hidden;
+            position: relative;
         }
 
         .progress-bar {
             height: 100%;
-            background-color: #4CAF50;
+            background: linear-gradient(45deg, #4CAF50, #45a049);
             width: 0%;
+            transition: width 0.3s ease-in-out;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-bar:after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0) 0%,
+                rgba(255, 255, 255, 0.2) 50%,
+                rgba(255, 255, 255, 0) 100%
+            );
+            animation: shine 1.5s infinite;
+        }
+
+        @keyframes shine {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(100%); }
+        }
+
+        .movement-indicators {
+            display: flex;
+            justify-content: space-between;
+            margin: 15px 0;
+        }
+
+        .movement-indicator {
+            text-align: center;
+            flex: 1;
+            margin: 0 5px;
+        }
+
+        .indicator-label {
+            font-size: 12px;
+            margin-bottom: 5px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .indicator-progress {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+        }
+
+        .indicator-fill {
+            height: 100%;
+            background-color: #4CAF50;
+            border-radius: 2px;
             transition: width 0.3s ease-in-out;
         }
 
         .calibration-button {
-            background-color: #4CAF50;
+            background: linear-gradient(45deg, #4CAF50, #45a049);
             color: white;
             border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
+            padding: 12px 24px;
+            border-radius: 25px;
             cursor: pointer;
             font-size: 16px;
-            margin-top: 10px;
+            margin-top: 15px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
 
         .calibration-button:hover {
-            background-color: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .calibration-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .success-criteria {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 10px;
+            font-style: italic;
         }
 
         .customization-panel {
@@ -180,11 +294,43 @@
             <div id="webcamLoading" class="loading" style="display: none;">Loading webcam...</div>
             <div id="calibrationOverlay" class="calibration-overlay">
                 <h3 id="calibrationTitle">Start Calibration</h3>
-                <p id="calibrationText">Please stand in a clear space, facing the camera.</p>
+                <div class="calibration-text" id="calibrationText">
+                    Please stand in a clear space, facing the camera.
+                </div>
+                <div class="calibration-details">
+                    <ul id="calibrationDetails">
+                    </ul>
+                </div>
                 <div class="calibration-progress">
                     <div id="progressBar" class="progress-bar"></div>
                 </div>
-                <p id="successCriteria"></p>
+                <div class="movement-indicators" id="movementIndicators">
+                    <div class="movement-indicator">
+                        <div class="indicator-label">Left</div>
+                        <div class="indicator-progress">
+                            <div id="leftProgress" class="indicator-fill"></div>
+                        </div>
+                    </div>
+                    <div class="movement-indicator">
+                        <div class="indicator-label">Right</div>
+                        <div class="indicator-progress">
+                            <div id="rightProgress" class="indicator-fill"></div>
+                        </div>
+                    </div>
+                    <div class="movement-indicator">
+                        <div class="indicator-label">Up</div>
+                        <div class="indicator-progress">
+                            <div id="upProgress" class="indicator-fill"></div>
+                        </div>
+                    </div>
+                    <div class="movement-indicator">
+                        <div class="indicator-label">Down</div>
+                        <div class="indicator-progress">
+                            <div id="downProgress" class="indicator-fill"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="success-criteria" id="successCriteria"></div>
                 <button id="startCalibrationBtn" class="calibration-button">Start Calibration</button>
             </div>
         </div>
@@ -241,7 +387,6 @@
         const poseCtx = poseCanvas.getContext('2d');
         const avatarCtx = avatarCanvas.getContext('2d');
 
-        // Calibration elements
         const calibrationOverlay = document.getElementById('calibrationOverlay');
         const calibrationTitle = document.getElementById('calibrationTitle');
         const calibrationText = document.getElementById('calibrationText');
@@ -249,7 +394,6 @@
         const progressBar = document.getElementById('progressBar');
         const startCalibrationBtn = document.getElementById('startCalibrationBtn');
 
-        // Customization controls
         const avatarColor = document.getElementById('avatarColor');
         const avatarSize = document.getElementById('avatarSize');
         const avatarStyle = document.getElementById('avatarStyle');
@@ -266,7 +410,6 @@
             });
         }
 
-        // Add event listeners for both mouse and touch events
         const addEventListeners = (element, handlers) => {
             if (handlers.change) element.addEventListener('change', handlers.change);
             if (handlers.input) {
@@ -279,14 +422,12 @@
             }
         };
 
-        // Add event listeners for customization controls
         addEventListeners(avatarColor, { change: updateAvatarCustomization });
         addEventListeners(avatarSize, { input: updateAvatarCustomization });
         addEventListeners(avatarStyle, { change: updateAvatarCustomization });
         addEventListeners(lineThickness, { input: updateAvatarCustomization });
         addEventListeners(jointSize, { input: updateAvatarCustomization });
 
-        // Calibration button event listener
         startCalibrationBtn.addEventListener('click', () => {
             socket.emit('start_calibration');
             startCalibrationBtn.style.display = 'none';
@@ -300,22 +441,42 @@
             document.getElementById(container + 'Loading').style.display = 'none';
         }
 
-        // Handle calibration instructions
         socket.on('calibration_instruction', (instruction) => {
             calibrationTitle.textContent = instruction.title;
             calibrationText.textContent = instruction.text;
+            
+            const detailsList = document.getElementById('calibrationDetails');
+            detailsList.innerHTML = instruction.details.map(detail => 
+                `<li>${detail}</li>`
+            ).join('');
+            
             successCriteria.textContent = instruction.success_criteria;
             progressBar.style.width = `${instruction.progress}%`;
+            
+            if (instruction.movement_progress) {
+                document.getElementById('leftProgress').style.width = 
+                    `${instruction.movement_progress.left * 100}%`;
+                document.getElementById('rightProgress').style.width = 
+                    `${instruction.movement_progress.right * 100}%`;
+                document.getElementById('upProgress').style.width = 
+                    `${instruction.movement_progress.up * 100}%`;
+                document.getElementById('downProgress').style.width = 
+                    `${instruction.movement_progress.down * 100}%`;
+            }
 
             if (instruction.state === 'completed') {
                 calibrationOverlay.style.display = 'none';
             } else {
                 calibrationOverlay.style.display = 'block';
-                startCalibrationBtn.style.display = instruction.state === 'not_started' ? 'block' : 'none';
+                startCalibrationBtn.style.display = 
+                    instruction.state === 'not_started' ? 'block' : 'none';
+                
+                const movementIndicators = document.getElementById('movementIndicators');
+                movementIndicators.style.display = 
+                    instruction.state === 'not_started' ? 'none' : 'flex';
             }
         });
 
-        // Handle window resizing
         function handleResize() {
             if (video.videoWidth && video.videoHeight) {
                 const aspectRatio = video.videoWidth / video.videoHeight;
@@ -332,7 +493,6 @@
 
         window.addEventListener('resize', handleResize);
 
-        // Set up webcam
         showLoading('webcam');
         navigator.mediaDevices.getUserMedia({ video: true })
             .then(stream => {
@@ -347,7 +507,6 @@
                 showError('Could not access webcam. Please check permissions.');
             });
 
-        // Handle socket connection
         socket.on('connect', () => {
             console.log('Connected to server');
             updateAvatarCustomization();
@@ -376,7 +535,6 @@
             setTimeout(() => errorDiv.remove(), 5000);
         }
 
-        // Process and send video frames
         function processFrame() {
             if (video.readyState === video.HAVE_ENOUGH_DATA) {
                 showLoading('pose');
@@ -394,9 +552,7 @@
             requestAnimationFrame(processFrame);
         }
 
-        // Handle processed frames from server
         socket.on('processed_frame', data => {
-            // Display pose detection frame
             const poseImg = new Image();
             poseImg.onload = () => {
                 poseCtx.clearRect(0, 0, poseCanvas.width, poseCanvas.height);
@@ -405,7 +561,6 @@
             };
             poseImg.src = data.pose_frame;
 
-            // Display avatar frame
             const avatarImg = new Image();
             avatarImg.onload = () => {
                 avatarCtx.clearRect(0, 0, avatarCanvas.width, avatarCanvas.height);
@@ -414,12 +569,10 @@
             };
             avatarImg.src = data.avatar_frame;
 
-            // Update expression and gesture info
             expressionInfo.textContent = `Expression: ${data.expression || 'None'}`;
             gestureInfo.textContent = `Gesture: ${data.gesture || 'None'}`;
         });
 
-        // Start processing when video is ready
         video.onloadeddata = () => {
             handleResize();
             processFrame();
