@@ -4,7 +4,8 @@ from flask_socketio import SocketIO
 import json
 
 app = Flask(__name__)
-socketio = SocketIO(app)
+app.config['SECRET_KEY'] = 'your_secret_key'
+socketio = SocketIO(app, cors_allowed_origins="*")
 
 # Load credentials from env
 with open('env.txt') as f:
@@ -16,6 +17,10 @@ os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = json.dumps(env_data['SERVICE_ACCO
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@socketio.on('connect')
+def handle_connect():
+    print('Client connected')
 
 @socketio.on('pose_data')
 def handle_pose_data(data):

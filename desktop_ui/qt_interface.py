@@ -1,7 +1,11 @@
 import sys
+import os
 from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QProgressBar, QVBoxLayout, QWidget
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QPalette, QColor
+
+# Set the Qt platform to offscreen
+os.environ['QT_QPA_PLATFORM'] = 'offscreen'
 
 class AvatarInterface(QMainWindow):
     def __init__(self):
@@ -66,4 +70,4 @@ def launch_qt_interface():
     app = QApplication(sys.argv)
     window = AvatarInterface()
     window.show()
-    sys.exit(app.exec_())
+    app.exec_()  # Remove sys.exit to prevent main thread from exiting

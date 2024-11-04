@@ -14,4 +14,5 @@ dependencies = [
     "pyqt5>=5.15.11",
     "mediapipe>=0.10.18",
     "flask-socketio>=5.4.1",
+    "eventlet",
 ]
