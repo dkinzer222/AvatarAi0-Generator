@@ -3,6 +3,7 @@ from flask_socketio import SocketIO, emit
 import cv2
 import numpy as np
 import base64
+import time
 from utils.pose_tracker import PoseTracker
 from utils.smplx_renderer import SMPLXRenderer
 from utils.calibration import CalibrationGuide
@@ -15,6 +16,12 @@ socketio = SocketIO(app, async_mode='eventlet', cors_allowed_origins="*")
 pose_tracker = PoseTracker()
 avatar_renderer = SMPLXRenderer()
 calibration_guide = CalibrationGuide()
+
+# Track processing times for progress indicators
+processing_stats = {
+    'pose_detection': {'start': 0, 'duration': 0},
+    'avatar_rendering': {'start': 0, 'duration': 0}
+}
 
 @app.route('/')
 def index():
@@ -62,6 +69,9 @@ def handle_avatar_update(data):
 @socketio.on('video_frame')
 def handle_video_frame(data):
     try:
+        # Start pose detection timing
+        processing_stats['pose_detection']['start'] = time.time()
+        
         # Decode base64 image
         encoded_data = data.split(',')[1]
         nparr = np.frombuffer(base64.b64decode(encoded_data), np.uint8)
@@ -71,8 +81,14 @@ def handle_video_frame(data):
             # Process frame with MediaPipe
             landmarks, face_landmarks, expression, gesture, processed_frame = pose_tracker.process_frame(frame)
             
-            # Update calibration state if landmarks detected
+            # Update pose detection timing
+            processing_stats['pose_detection']['duration'] = time.time() - processing_stats['pose_detection']['start']
+            
+            # Start avatar rendering timing
+            processing_stats['avatar_rendering']['start'] = time.time()
+            
             if landmarks is not None:
+                # Update calibration state if landmarks detected
                 calibration_instruction = calibration_guide.update_calibration(landmarks)
                 emit('calibration_instruction', calibration_instruction)
                 
@@ -82,6 +98,9 @@ def handle_video_frame(data):
                 # Render SMPL-X avatar
                 avatar_frame = avatar_renderer.render_avatar(landmarks, expression)
                 
+                # Update avatar rendering timing
+                processing_stats['avatar_rendering']['duration'] = time.time() - processing_stats['avatar_rendering']['start']
+                
                 # Convert frames to base64 for sending back to client
                 _, buffer = cv2.imencode('.jpg', pose_frame)
                 pose_data = base64.b64encode(buffer).decode('utf-8')
@@ -89,12 +108,21 @@ def handle_video_frame(data):
                 _, buffer = cv2.imencode('.jpg', avatar_frame)
                 avatar_data = base64.b64encode(buffer).decode('utf-8')
                 
-                # Send both frames back to client along with expression and gesture
+                # Calculate processing progress percentages
+                pose_progress = min(100, (processing_stats['pose_detection']['duration'] / 0.033) * 100)
+                avatar_progress = min(100, (processing_stats['avatar_rendering']['duration'] / 0.033) * 100)
+                
+                # Send both frames back to client along with expression, gesture, and progress
                 emit('processed_frame', {
                     'pose_frame': f'data:image/jpeg;base64,{pose_data}',
                     'avatar_frame': f'data:image/jpeg;base64,{avatar_data}',
                     'expression': expression,
-                    'gesture': gesture
+                    'gesture': gesture,
+                    'processing_progress': {
+                        'pose_detection': pose_progress,
+                        'avatar_rendering': avatar_progress
+                    }
                 })
     except Exception as e:
         print(f"Error processing frame: {str(e)}")
+        emit('error', {'message': str(e)})
