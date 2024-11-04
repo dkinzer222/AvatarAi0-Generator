@@ -19,6 +19,12 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background: #f0f0f0;
             overscroll-behavior: none;
+            min-height: 100vh;
+            min-height: -webkit-fill-available;
+        }
+
+        html {
+            height: -webkit-fill-available;
         }
 
         .container {
@@ -29,6 +35,7 @@
             gap: 20px;
             max-width: 100%;
             margin: 0 auto;
+            min-height: 100vh;
         }
 
         /* Video container styles */
@@ -51,11 +58,12 @@
         }
 
         video, canvas {
-            width: 100%;
-            height: auto;
+            width: 100% !important;
+            height: auto !important;
             aspect-ratio: 4/3;
-            object-fit: contain;
+            object-fit: cover;
             display: block;
+            background-color: #000;
         }
 
         /* Loading overlay with progress */
@@ -73,6 +81,7 @@
             color: white;
             z-index: 90;
             backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
         }
 
         .loading-spinner {
@@ -124,27 +133,6 @@
             text-shadow: 0 1px 2px rgba(0,0,0,0.3);
         }
 
-        /* Enhanced calibration overlay */
-        .calibration-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.85);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            z-index: 100;
-            backdrop-filter: blur(5px);
-            padding: 20px;
-            text-align: center;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-
         /* Mobile-specific styles */
         @media (max-width: 768px) {
             .container {
@@ -155,27 +143,34 @@
             .video-container {
                 margin-bottom: 5px;
                 border-radius: 8px;
+                width: 100vw;
+                max-width: 100%;
             }
 
-            .progress-container {
-                width: 90%;
-                padding: 5px;
-            }
-
-            .progress-label {
-                font-size: 12px;
-            }
-
-            .calibration-overlay {
-                padding: 10px;
+            video, canvas {
+                width: 100% !important;
+                height: auto !important;
+                max-height: none;
             }
 
             .control-panel {
-                padding: 10px;
+                padding: 15px;
+                width: 100vw;
+                max-width: 100%;
+                border-radius: 0;
+            }
+
+            .control-group {
+                margin-bottom: 20px;
             }
 
             .control-group label {
-                font-size: 14px;
+                font-size: 16px;
+            }
+
+            input[type="range"] {
+                height: 44px;
+                margin: 15px 0;
             }
 
             input[type="range"]::-webkit-slider-thumb {
@@ -184,20 +179,23 @@
             }
 
             select {
-                padding: 12px;
-                font-size: 14px;
+                height: 44px;
+                padding: 0 12px;
+                font-size: 16px;
             }
 
             .action-button {
                 padding: 12px 24px;
                 font-size: 16px;
+                min-height: 44px;
+                width: 100%;
             }
         }
 
         /* Touch-friendly controls */
         .control-panel {
             background: white;
-            padding: 15px;
+            padding: 20px;
             border-radius: 12px;
             width: 100%;
             max-width: 640px;
@@ -224,6 +222,7 @@
             background: transparent;
             margin: 10px 0;
             padding: 0;
+            touch-action: none;
         }
 
         input[type="range"]::-webkit-slider-thumb {
@@ -276,6 +275,7 @@
             transition: transform 0.2s, background 0.2s;
             touch-action: manipulation;
             box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+            -webkit-tap-highlight-color: transparent;
         }
 
         .action-button:active {
@@ -287,11 +287,11 @@
         .error-message {
             background: #e74c3c;
             color: white;
-            padding: 10px 20px;
+            padding: 15px 25px;
             border-radius: 8px;
             margin: 10px 0;
             text-align: center;
-            font-size: 14px;
+            font-size: 16px;
             position: fixed;
             bottom: 20px;
             left: 50%;
@@ -299,6 +299,62 @@
             z-index: 1000;
             box-shadow: 0 2px 10px rgba(0,0,0,0.2);
             display: none;
+            max-width: 90%;
+            width: auto;
+        }
+
+        /* Calibration overlay */
+        .calibration-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            z-index: 100;
+        }
+
+        .calibration-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .calibration-instruction {
+            font-size: 18px;
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+
+        .calibration-steps {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 20px 0;
+            text-align: left;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .calibration-steps li {
+            margin-bottom: 10px;
+            padding-left: 25px;
+            position: relative;
+            font-size: 16px;
+            line-height: 1.4;
+        }
+
+        .calibration-steps li:before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: #3498db;
         }
     </style>
 </head>
@@ -306,7 +362,7 @@
     <div class="container">
         <div class="video-container">
             <h2>Webcam Feed</h2>
-            <video id="webcam" autoplay playsinline></video>
+            <video id="webcam" autoplay playsinline muted></video>
             <div id="calibrationOverlay" class="calibration-overlay" style="display: none;">
                 <div class="calibration-title" id="calibrationTitle"></div>
                 <div class="calibration-instruction" id="calibrationInstruction"></div>
@@ -385,23 +441,60 @@
         let socket;
         let isProcessingFrame = false;
         let currentCalibrationState = 'not_started';
+        let retryCount = 0;
+        const maxRetries = 3;
         
         // Initialize webcam and socket connection
         async function initializeWebcam() {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({
+                const constraints = {
                     video: {
                         width: { ideal: 640 },
                         height: { ideal: 480 },
-                        facingMode: "user"
+                        facingMode: "user",
+                        aspectRatio: { ideal: 4/3 }
                     }
-                });
+                };
+                
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
                 const video = document.getElementById('webcam');
                 video.srcObject = stream;
+                
+                // Wait for video metadata to load
+                await new Promise((resolve) => {
+                    video.onloadedmetadata = resolve;
+                });
+                
+                // Set initial canvas sizes
+                const poseCanvas = document.getElementById('poseCanvas');
+                const avatarCanvas = document.getElementById('avatarCanvas');
+                
+                function updateCanvasSizes() {
+                    const width = video.videoWidth;
+                    const height = video.videoHeight;
+                    
+                    if (width && height) {
+                        poseCanvas.width = width;
+                        poseCanvas.height = height;
+                        avatarCanvas.width = width;
+                        avatarCanvas.height = height;
+                    }
+                }
+                
+                // Update canvas sizes initially and on resize
+                updateCanvasSizes();
+                window.addEventListener('resize', updateCanvasSizes);
+                
                 initializeSocket();
             } catch (error) {
                 console.error('Error accessing webcam:', error);
-                showError('Unable to access webcam. Please check permissions.');
+                showError('Unable to access webcam. Please check permissions and try again.');
+                
+                // Retry logic for webcam initialization
+                if (retryCount < maxRetries) {
+                    retryCount++;
+                    setTimeout(initializeWebcam, 2000);
+                }
             }
         }
 
@@ -423,21 +516,22 @@
 
                 socket.on('connect', () => {
                     console.log('Connected to server');
+                    hideError();
                     showCalibrationOverlay();
                 });
 
                 socket.on('disconnect', () => {
                     console.log('Disconnected from server');
                     hideCalibrationOverlay();
-                    showError('Lost connection to server');
+                    showError('Lost connection to server. Reconnecting...');
                 });
 
                 socket.on('processed_frame', handleProcessedFrame);
                 socket.on('calibration_instruction', handleCalibrationInstruction);
                 socket.on('error', handleError);
 
-                // Set up video frame sending
                 setupVideoFrameSending();
+                setupControls();
             } catch (error) {
                 console.error('Socket initialization error:', error);
                 showError('Failed to initialize connection. Please refresh the page.');
@@ -448,59 +542,55 @@
             const video = document.getElementById('webcam');
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
+            let frameCount = 0;
+            const frameInterval = 2; // Send every 2nd frame
 
             function sendVideoFrame() {
                 if (!isProcessingFrame && socket && socket.connected && video.readyState === video.HAVE_ENOUGH_DATA) {
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
-                    ctx.drawImage(video, 0, 0);
-                    
-                    try {
-                        const imageData = canvas.toDataURL('image/jpeg', 0.7);
-                        socket.emit('video_frame', imageData);
-                        isProcessingFrame = true;
+                    frameCount++;
+                    if (frameCount % frameInterval === 0) {
+                        canvas.width = video.videoWidth;
+                        canvas.height = video.videoHeight;
+                        ctx.drawImage(video, 0, 0);
                         
-                        // Show loading overlays
-                        document.getElementById('poseLoading').style.display = 'flex';
-                        document.getElementById('avatarLoading').style.display = 'flex';
-                    } catch (error) {
-                        console.error('Error sending video frame:', error);
+                        try {
+                            const imageData = canvas.toDataURL('image/jpeg', 0.7);
+                            socket.emit('video_frame', imageData);
+                            isProcessingFrame = true;
+                            
+                            // Show loading overlays with smooth animation
+                            const poseLoading = document.getElementById('poseLoading');
+                            const avatarLoading = document.getElementById('avatarLoading');
+                            
+                            if (poseLoading.style.display === 'none') {
+                                poseLoading.style.opacity = '0';
+                                poseLoading.style.display = 'flex';
+                                setTimeout(() => {
+                                    poseLoading.style.opacity = '1';
+                                }, 10);
+                            }
+                            
+                            if (avatarLoading.style.display === 'none') {
+                                avatarLoading.style.opacity = '0';
+                                avatarLoading.style.display = 'flex';
+                                setTimeout(() => {
+                                    avatarLoading.style.opacity = '1';
+                                }, 10);
+                            }
+                        } catch (error) {
+                            console.error('Error sending video frame:', error);
+                            isProcessingFrame = false;
+                        }
                     }
                 }
                 requestAnimationFrame(sendVideoFrame);
             }
 
             video.onloadedmetadata = () => {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
                 sendVideoFrame();
             };
-        }
-
-        function handleProcessedFrame(data) {
-            // Update pose detection canvas
-            if (data.pose_frame) {
-                updateCanvas('poseCanvas', data.pose_frame);
-            }
-            
-            // Update avatar canvas
-            if (data.avatar_frame) {
-                updateCanvas('avatarCanvas', data.avatar_frame);
-            }
-
-            // Update progress bars
-            if (data.processing_progress) {
-                updateProgress('pose', data.processing_progress.pose_detection);
-                updateProgress('avatar', data.processing_progress.avatar_rendering);
-            }
-
-            // Hide loading overlays if processing is complete
-            if (data.processing_progress && 
-                data.processing_progress.pose_detection >= 100 && 
-                data.processing_progress.avatar_rendering >= 100) {
-                document.getElementById('poseLoading').style.display = 'none';
-                document.getElementById('avatarLoading').style.display = 'none';
-            }
-
-            isProcessingFrame = false;
         }
 
         function updateCanvas(canvasId, imageData) {
@@ -509,70 +599,186 @@
             const img = new Image();
             
             img.onload = () => {
-                canvas.width = img.width;
-                canvas.height = img.height;
-                ctx.drawImage(img, 0, 0);
+                // Maintain aspect ratio while filling the canvas
+                const canvasAspect = canvas.width / canvas.height;
+                const imgAspect = img.width / img.height;
+                let drawWidth = canvas.width;
+                let drawHeight = canvas.height;
+                let offsetX = 0;
+                let offsetY = 0;
+
+                if (canvasAspect > imgAspect) {
+                    drawHeight = canvas.width / imgAspect;
+                    offsetY = (canvas.height - drawHeight) / 2;
+                } else {
+                    drawWidth = canvas.height * imgAspect;
+                    offsetX = (canvas.width - drawWidth) / 2;
+                }
+
+                // Clear canvas and draw new image
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
             };
             
             img.src = imageData;
         }
 
+        function handleProcessedFrame(data) {
+            isProcessingFrame = false;
+            
+            if (data.pose_frame) {
+                updateCanvas('poseCanvas', data.pose_frame);
+                updateProgress('pose', data.processing_progress.pose_detection);
+            }
+            
+            if (data.avatar_frame) {
+                updateCanvas('avatarCanvas', data.avatar_frame);
+                updateProgress('avatar', data.processing_progress.avatar_rendering);
+            }
+            
+            // Hide loading overlays with smooth animation
+            const poseLoading = document.getElementById('poseLoading');
+            const avatarLoading = document.getElementById('avatarLoading');
+            
+            if (poseLoading.style.display !== 'none') {
+                poseLoading.style.opacity = '0';
+                setTimeout(() => {
+                    poseLoading.style.display = 'none';
+                }, 300);
+            }
+            
+            if (avatarLoading.style.display !== 'none') {
+                avatarLoading.style.opacity = '0';
+                setTimeout(() => {
+                    avatarLoading.style.display = 'none';
+                }, 300);
+            }
+        }
+
         function updateProgress(type, progress) {
             const progressBar = document.getElementById(`${type}Progress`);
-            const progressLabel = document.getElementById(`${type}ProgressLabel`);
-            
-            if (progressBar && progressLabel) {
+            const label = document.getElementById(`${type}ProgressLabel`);
+            if (progressBar && label) {
                 progressBar.style.width = `${progress}%`;
-                progressLabel.textContent = `${Math.round(progress)}%`;
+                label.textContent = `${Math.round(progress)}%`;
             }
+        }
+
+        function handleCalibrationInstruction(instruction) {
+            const overlay = document.getElementById('calibrationOverlay');
+            const title = document.getElementById('calibrationTitle');
+            const text = document.getElementById('calibrationInstruction');
+            const steps = document.getElementById('calibrationSteps');
+            const progress = document.getElementById('calibrationProgress');
+            const progressLabel = document.getElementById('calibrationProgressLabel');
+            const startButton = document.getElementById('startCalibration');
+            
+            currentCalibrationState = instruction.state;
+            
+            if (instruction.state === 'not_started') {
+                showCalibrationOverlay();
+            } else if (instruction.state === 'completed') {
+                hideCalibrationOverlay();
+            }
+            
+            title.textContent = instruction.title;
+            text.textContent = instruction.text;
+            
+            // Clear and update steps
+            steps.innerHTML = '';
+            instruction.details.forEach(detail => {
+                const li = document.createElement('li');
+                li.textContent = detail;
+                steps.appendChild(li);
+            });
+            
+            // Update progress
+            progress.style.width = `${instruction.progress}%`;
+            progressLabel.textContent = `${instruction.progress}%`;
+            
+            // Show/hide start button
+            startButton.style.display = instruction.state === 'not_started' ? 'block' : 'none';
+        }
+
+        function showCalibrationOverlay() {
+            const overlay = document.getElementById('calibrationOverlay');
+            overlay.style.display = 'flex';
+        }
+
+        function hideCalibrationOverlay() {
+            const overlay = document.getElementById('calibrationOverlay');
+            overlay.style.display = 'none';
+        }
+
+        function handleError(error) {
+            showError(error.message);
         }
 
         function showError(message) {
             const errorElement = document.getElementById('errorMessage');
             errorElement.textContent = message;
             errorElement.style.display = 'block';
+            
+            // Auto-hide error after 5 seconds
             setTimeout(() => {
-                errorElement.style.display = 'none';
+                errorElement.style.opacity = '0';
+                setTimeout(() => {
+                    errorElement.style.display = 'none';
+                    errorElement.style.opacity = '1';
+                }, 300);
             }, 5000);
         }
 
-        function handleError(error) {
-            console.error('Server error:', error);
-            showError(error.message || 'An error occurred');
+        function hideError() {
+            const errorElement = document.getElementById('errorMessage');
+            errorElement.style.opacity = '0';
+            setTimeout(() => {
+                errorElement.style.display = 'none';
+                errorElement.style.opacity = '1';
+            }, 300);
         }
 
-        // Initialize avatar customization controls
-        function initializeControls() {
-            document.getElementById('avatarColor').addEventListener('change', (e) => {
+        function setupControls() {
+            // Avatar color control
+            const colorPicker = document.getElementById('avatarColor');
+            colorPicker.addEventListener('change', (e) => {
                 socket.emit('update_avatar', { color: e.target.value });
             });
-
-            document.getElementById('avatarSize').addEventListener('input', (e) => {
+            
+            // Avatar size control
+            const sizeSlider = document.getElementById('avatarSize');
+            sizeSlider.addEventListener('input', (e) => {
                 socket.emit('update_avatar', { size: e.target.value });
             });
-
-            document.getElementById('lineStyle').addEventListener('change', (e) => {
+            
+            // Line style control
+            const styleSelect = document.getElementById('lineStyle');
+            styleSelect.addEventListener('change', (e) => {
                 socket.emit('update_avatar', { style: e.target.value });
             });
-
-            document.getElementById('lineThickness').addEventListener('input', (e) => {
+            
+            // Line thickness control
+            const thicknessSlider = document.getElementById('lineThickness');
+            thicknessSlider.addEventListener('input', (e) => {
                 socket.emit('update_avatar', { lineThickness: e.target.value });
             });
-
-            document.getElementById('jointSize').addEventListener('input', (e) => {
+            
+            // Joint size control
+            const jointSizeSlider = document.getElementById('jointSize');
+            jointSizeSlider.addEventListener('input', (e) => {
                 socket.emit('update_avatar', { jointSize: e.target.value });
             });
-
-            document.getElementById('startCalibration').addEventListener('click', () => {
+            
+            // Start calibration button
+            const startButton = document.getElementById('startCalibration');
+            startButton.addEventListener('click', () => {
                 socket.emit('start_calibration');
             });
         }
 
-        // Start everything when the page loads
-        window.addEventListener('load', () => {
-            initializeWebcam();
-            initializeControls();
-        });
+        // Start the application
+        document.addEventListener('DOMContentLoaded', initializeWebcam);
     </script>
 </body>
 </html>

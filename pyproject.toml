@@ -31,4 +31,5 @@ dependencies = [
     "websockets",
     "pyopengl-accelerate>=3.1.7",
     "werkzeug",
+    "opencv-contrib-python",
 ]
