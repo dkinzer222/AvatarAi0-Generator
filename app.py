@@ -1,18 +1,18 @@
-import os
 from flask import Flask, render_template
-from flask_socketio import SocketIO
-import json
+from flask_socketio import SocketIO, emit
+import cv2
+import numpy as np
+import base64
+from utils.pose_tracker import PoseTracker
+from utils.smplx_renderer import SMPLXRenderer
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your_secret_key'
-socketio = SocketIO(app, cors_allowed_origins="*")
+app.config['SECRET_KEY'] = 'secret!'
+socketio = SocketIO(app, async_mode='eventlet', cors_allowed_origins="*")
 
-# Load credentials from env
-with open('env.txt') as f:
-    env_data = json.load(f)
-    
-app.config['SECRET_KEY'] = env_data['FLASK_SECRET_KEY']
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = json.dumps(env_data['SERVICE_ACCOUNT_JSON'])
+# Initialize pose tracker and avatar renderer
+pose_tracker = PoseTracker()
+avatar_renderer = SMPLXRenderer()
 
 @app.route('/')
 def index():
@@ -20,15 +20,42 @@ def index():
 
 @socketio.on('connect')
 def handle_connect():
-    print('Client connected')
+    print("Client connected")
 
-@socketio.on('pose_data')
-def handle_pose_data(data):
-    # Process pose data and update avatar
-    socketio.emit('avatar_update', data)
+@socketio.on('disconnect')
+def handle_disconnect():
+    print("Client disconnected")
 
-@socketio.on('voice_command')
-def handle_voice(data):
-    from utils.google_cloud import process_speech
-    response = process_speech(data)
-    socketio.emit('voice_response', response)
+@socketio.on('video_frame')
+def handle_video_frame(data):
+    try:
+        # Decode base64 image
+        encoded_data = data.split(',')[1]
+        nparr = np.frombuffer(base64.b64decode(encoded_data), np.uint8)
+        frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+        if frame is not None and frame.size > 0:
+            # Process frame with MediaPipe
+            landmarks, processed_frame = pose_tracker.process_frame(frame)
+            
+            if landmarks is not None:
+                # Draw pose landmarks on original frame
+                pose_frame = pose_tracker.draw_pose(frame.copy(), landmarks)
+                
+                # Render SMPL-X avatar
+                avatar_frame = avatar_renderer.render_avatar(landmarks)
+                
+                # Convert frames to base64 for sending back to client
+                _, buffer = cv2.imencode('.jpg', pose_frame)
+                pose_data = base64.b64encode(buffer).decode('utf-8')
+                
+                _, buffer = cv2.imencode('.jpg', avatar_frame)
+                avatar_data = base64.b64encode(buffer).decode('utf-8')
+                
+                # Send both frames back to client
+                emit('processed_frame', {
+                    'pose_frame': f'data:image/jpeg;base64,{pose_data}',
+                    'avatar_frame': f'data:image/jpeg;base64,{avatar_data}'
+                })
+    except Exception as e:
+        print(f"Error processing frame: {str(e)}")

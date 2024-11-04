@@ -1,27 +1,104 @@
 <!DOCTYPE html>
-<html data-bs-theme="dark">
+<html>
 <head>
-    <title>3D Avatar Interface</title>
-    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
-    <link href="/static/css/style.css" rel="stylesheet">
+    <title>3D Avatar with Pose Tracking</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <style>
+        .container {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px;
+        }
+        .video-container {
+            text-align: center;
+        }
+        video, canvas {
+            width: 640px;
+            height: 480px;
+            border: 1px solid #ccc;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-        <div class="row">
-            <div class="col-md-6">
-                <div id="webcam-container"></div>
-            </div>
-            <div class="col-md-6">
-                <div id="avatar-container"></div>
-            </div>
+        <div class="video-container">
+            <h2>Webcam Feed</h2>
+            <video id="webcam" autoplay playsinline></video>
+        </div>
+        <div class="video-container">
+            <h2>Pose Detection</h2>
+            <canvas id="poseCanvas"></canvas>
+        </div>
+        <div class="video-container">
+            <h2>3D Avatar</h2>
+            <canvas id="avatarCanvas"></canvas>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4/dist/socket.io.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/pose.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
-    <script src="/static/js/pose_tracking.js"></script>
-    <script src="/static/js/avatar.js"></script>
-    <script src="/static/js/websocket.js"></script>
+    <script>
+        const socket = io();
+        const video = document.getElementById('webcam');
+        const poseCanvas = document.getElementById('poseCanvas');
+        const avatarCanvas = document.getElementById('avatarCanvas');
+        const poseCtx = poseCanvas.getContext('2d');
+        const avatarCtx = avatarCanvas.getContext('2d');
+
+        // Set up webcam
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+            })
+            .catch(err => console.error('Error accessing webcam:', err));
+
+        // Handle socket connection
+        socket.on('connect', () => {
+            console.log('Connected to server');
+        });
+
+        // Process and send video frames
+        function processFrame() {
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                // Create a temporary canvas to capture the video frame
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = video.videoWidth;
+                tempCanvas.height = video.videoHeight;
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCtx.drawImage(video, 0, 0);
+
+                // Convert the frame to base64 and send to server
+                const dataURL = tempCanvas.toDataURL('image/jpeg');
+                socket.emit('video_frame', dataURL);
+            }
+            requestAnimationFrame(processFrame);
+        }
+
+        // Handle processed frames from server
+        socket.on('processed_frame', data => {
+            // Display pose detection frame
+            const poseImg = new Image();
+            poseImg.onload = () => {
+                poseCtx.clearRect(0, 0, poseCanvas.width, poseCanvas.height);
+                poseCtx.drawImage(poseImg, 0, 0, poseCanvas.width, poseCanvas.height);
+            };
+            poseImg.src = data.pose_frame;
+
+            // Display avatar frame
+            const avatarImg = new Image();
+            avatarImg.onload = () => {
+                avatarCtx.clearRect(0, 0, avatarCanvas.width, avatarCanvas.height);
+                avatarCtx.drawImage(avatarImg, 0, 0, avatarCanvas.width, avatarCanvas.height);
+            };
+            avatarImg.src = data.avatar_frame;
+        });
+
+        // Start processing when video is ready
+        video.onloadeddata = () => {
+            poseCanvas.width = video.videoWidth;
+            poseCanvas.height = video.videoHeight;
+            avatarCanvas.width = video.videoWidth;
+            avatarCanvas.height = video.videoHeight;
+            processFrame();
+        };
+    </script>
 </body>
 </html>
