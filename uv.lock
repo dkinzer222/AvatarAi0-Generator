@@ -1197,6 +1197,21 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/9c/1d/4544708aaa89f26c97cc09450bb333a23724a320923e74d73e028b3560f9/PyOpenGL-3.1.0.tar.gz", hash = "sha256:9b47c5c3a094fa518ca88aeed35ae75834d53e4285512c61879f67a48c94ddaf", size = 1172688 }
 
 [[package]]
+name = "pyopengl-accelerate"
+version = "3.1.7"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/93/09/d08b3d07dbd88258276496a47273778f330f5ccf8390cb21b16b29d660de/PyOpenGL-accelerate-3.1.7.tar.gz", hash = "sha256:2b123621273a939f7fd2ec227541e399f9b5d4e815d69ae0bdb1b6c70a293680", size = 562094 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/86/56/dcbae824e7b6ed5193c674da9ccabe866bae775bed9594cb9cb9228e00af/PyOpenGL_accelerate-3.1.7-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:ad8e2d186878946e5c4896d1c241af6b5f8cd87433e46741d29c3fdea6eba2c5", size = 380889 },
+    { url = "https://files.pythonhosted.org/packages/d9/5f/4d88d6d8aa0277e087e9d2e821a2c92640158db2d82f0ebb2cdde63e1f0d/PyOpenGL_accelerate-3.1.7-cp311-cp311-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:6c1b2b93d25e9ec8475416ed18c27a0231f29dffe0b524d827276802534a3cde", size = 2325392 },
+    { url = "https://files.pythonhosted.org/packages/84/58/d1aff3b46ecb5ac4d6f1bf0fa029ccffc57c046f46f579c86f2a09b40377/PyOpenGL_accelerate-3.1.7-cp311-cp311-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:ed4efe15eedc79415ee192a9ca8bec04f19c7e313444ac50e50ea26c80606ce2", size = 2499207 },
+    { url = "https://files.pythonhosted.org/packages/cb/92/e58891603797f7b28551f682fc6e8a38c3ed7aaf546e8720c690f85e6f7e/PyOpenGL_accelerate-3.1.7-cp311-cp311-musllinux_1_1_i686.whl", hash = "sha256:e8b41f94a185c71d4c2658e9ee1a6f14e555e8b83bd4e18e6367d66da6a39242", size = 2331966 },
+    { url = "https://files.pythonhosted.org/packages/f0/bb/2e5d5305d338ab9aa077de9698258bb383e8d2e2995727e073c2fc67ddf0/PyOpenGL_accelerate-3.1.7-cp311-cp311-musllinux_1_1_x86_64.whl", hash = "sha256:71b8a862ab85e02b7f88d935045be25ebc4104c3676263f0b90a91a520b66bd5", size = 2467429 },
+    { url = "https://files.pythonhosted.org/packages/af/04/01ddea04df9a40cfac42323cc84b527594589bf5116bb3fed34e4e55fce1/PyOpenGL_accelerate-3.1.7-cp311-cp311-win32.whl", hash = "sha256:67b9f9d86ed5a928ebf93ace86dd8a4959388e04e89e115075575bbbe72c6546", size = 268879 },
+    { url = "https://files.pythonhosted.org/packages/c6/e3/e4c02ccbba4012e16ece90f0e1ccc8e2aa781edd95d6ab193e1d4a9dd63d/PyOpenGL_accelerate-3.1.7-cp311-cp311-win_amd64.whl", hash = "sha256:d3678b03e2cb41f87c84411313c441466497b7b829678ad5801944820f986cb7", size = 311914 },
+]
+
+[[package]]
 name = "pyparsing"
 version = "3.2.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1328,6 +1343,7 @@ dependencies = [
     { name = "protobuf" },
     { name = "psycopg2-binary" },
     { name = "pyopengl" },
+    { name = "pyopengl-accelerate" },
     { name = "pyqt5" },
     { name = "pyrender" },
     { name = "python-socketio" },
@@ -1357,6 +1373,7 @@ requires-dist = [
     { name = "protobuf" },
     { name = "psycopg2-binary", specifier = ">=2.9.10" },
     { name = "pyopengl" },
+    { name = "pyopengl-accelerate", specifier = ">=3.1.7" },
     { name = "pyqt5", specifier = ">=5.15.11" },
     { name = "pyrender" },
     { name = "python-socketio", specifier = ">=5.11.4" },

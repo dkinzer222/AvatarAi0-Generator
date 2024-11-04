@@ -25,6 +25,7 @@
             width: 100%;
             max-width: 640px;
             margin-bottom: 20px;
+            position: relative;
         }
 
         @media (min-width: 768px) {
@@ -81,6 +82,52 @@
             font-weight: bold;
         }
 
+        .calibration-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            z-index: 100;
+            width: 80%;
+            max-width: 400px;
+        }
+
+        .calibration-progress {
+            width: 100%;
+            height: 20px;
+            background-color: #444;
+            border-radius: 10px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: #4CAF50;
+            width: 0%;
+            transition: width 0.3s ease-in-out;
+        }
+
+        .calibration-button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        .calibration-button:hover {
+            background-color: #45a049;
+        }
+
         .customization-panel {
             width: 100%;
             padding: 10px;
@@ -131,6 +178,15 @@
             <h2>Webcam Feed</h2>
             <video id="webcam" autoplay playsinline></video>
             <div id="webcamLoading" class="loading" style="display: none;">Loading webcam...</div>
+            <div id="calibrationOverlay" class="calibration-overlay">
+                <h3 id="calibrationTitle">Start Calibration</h3>
+                <p id="calibrationText">Please stand in a clear space, facing the camera.</p>
+                <div class="calibration-progress">
+                    <div id="progressBar" class="progress-bar"></div>
+                </div>
+                <p id="successCriteria"></p>
+                <button id="startCalibrationBtn" class="calibration-button">Start Calibration</button>
+            </div>
         </div>
         <div class="video-container">
             <h2>Pose Detection</h2>
@@ -185,6 +241,14 @@
         const poseCtx = poseCanvas.getContext('2d');
         const avatarCtx = avatarCanvas.getContext('2d');
 
+        // Calibration elements
+        const calibrationOverlay = document.getElementById('calibrationOverlay');
+        const calibrationTitle = document.getElementById('calibrationTitle');
+        const calibrationText = document.getElementById('calibrationText');
+        const successCriteria = document.getElementById('successCriteria');
+        const progressBar = document.getElementById('progressBar');
+        const startCalibrationBtn = document.getElementById('startCalibrationBtn');
+
         // Customization controls
         const avatarColor = document.getElementById('avatarColor');
         const avatarSize = document.getElementById('avatarSize');
@@ -222,6 +286,12 @@
         addEventListeners(lineThickness, { input: updateAvatarCustomization });
         addEventListeners(jointSize, { input: updateAvatarCustomization });
 
+        // Calibration button event listener
+        startCalibrationBtn.addEventListener('click', () => {
+            socket.emit('start_calibration');
+            startCalibrationBtn.style.display = 'none';
+        });
+
         function showLoading(container) {
             document.getElementById(container + 'Loading').style.display = 'flex';
         }
@@ -229,6 +299,21 @@
         function hideLoading(container) {
             document.getElementById(container + 'Loading').style.display = 'none';
         }
+
+        // Handle calibration instructions
+        socket.on('calibration_instruction', (instruction) => {
+            calibrationTitle.textContent = instruction.title;
+            calibrationText.textContent = instruction.text;
+            successCriteria.textContent = instruction.success_criteria;
+            progressBar.style.width = `${instruction.progress}%`;
+
+            if (instruction.state === 'completed') {
+                calibrationOverlay.style.display = 'none';
+            } else {
+                calibrationOverlay.style.display = 'block';
+                startCalibrationBtn.style.display = instruction.state === 'not_started' ? 'block' : 'none';
+            }
+        });
 
         // Handle window resizing
         function handleResize() {

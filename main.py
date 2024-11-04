@@ -1,5 +1,5 @@
 import os
-# Force CPU/Software rendering
+# Force CPU/Software rendering for better compatibility
 os.environ['OPENCV_VIDEOIO_MMAP'] = '0'
 os.environ['OPENCV_VIDEOIO_DEBUG'] = '0'
 os.environ['MEDIAPIPE_DISABLE_GPU'] = '1'
@@ -11,7 +11,7 @@ os.environ['MESA_GL_VERSION_OVERRIDE'] = '3.3'
 
 # Configure eventlet before any other imports
 import eventlet
-eventlet.monkey_patch(socket=True, select=True)
+eventlet.monkey_patch()
 
 from app import app, socketio
 
@@ -19,10 +19,14 @@ if __name__ == "__main__":
     try:
         print("Starting 3D Avatar Application...")
         print("Server will be available at http://0.0.0.0:5000")
+        
         # Use eventlet wsgi server
-        eventlet.wsgi.server(
-            eventlet.listen(('0.0.0.0', 5000)), 
+        socketio.run(
             app,
+            host='0.0.0.0',
+            port=5000,
+            debug=False,
+            use_reloader=False,
             log_output=True
         )
     except Exception as e:

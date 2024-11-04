@@ -5,14 +5,16 @@ import numpy as np
 import base64
 from utils.pose_tracker import PoseTracker
 from utils.smplx_renderer import SMPLXRenderer
+from utils.calibration import CalibrationGuide
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app, async_mode='eventlet', cors_allowed_origins="*")
 
-# Initialize pose tracker and avatar renderer
+# Initialize components
 pose_tracker = PoseTracker()
 avatar_renderer = SMPLXRenderer()
+calibration_guide = CalibrationGuide()
 
 @app.route('/')
 def index():
@@ -21,10 +23,17 @@ def index():
 @socketio.on('connect')
 def handle_connect():
     print("Client connected")
+    emit('calibration_instruction', calibration_guide.get_current_instruction())
 
 @socketio.on('disconnect')
 def handle_disconnect():
     print("Client disconnected")
+
+@socketio.on('start_calibration')
+def handle_start_calibration():
+    """Handle calibration start request"""
+    instruction = calibration_guide.start_calibration()
+    emit('calibration_instruction', instruction)
 
 @socketio.on('update_avatar')
 def handle_avatar_update(data):
@@ -62,7 +71,11 @@ def handle_video_frame(data):
             # Process frame with MediaPipe
             landmarks, face_landmarks, expression, gesture, processed_frame = pose_tracker.process_frame(frame)
             
+            # Update calibration state if landmarks detected
             if landmarks is not None:
+                calibration_instruction = calibration_guide.update_calibration(landmarks)
+                emit('calibration_instruction', calibration_instruction)
+                
                 # Draw pose landmarks, facial expression, and gestures on original frame
                 pose_frame = pose_tracker.draw_pose(frame.copy(), landmarks, face_landmarks, expression, gesture)
                 
