@@ -7,6 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <style>
+        /* Base styles */
         * {
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
@@ -30,6 +31,7 @@
             margin: 0 auto;
         }
 
+        /* Video container styles */
         .video-container {
             width: 100%;
             max-width: 640px;
@@ -56,6 +58,7 @@
             display: block;
         }
 
+        /* Loading overlay with progress */
         .loading-overlay {
             position: absolute;
             top: 0;
@@ -68,20 +71,36 @@
             justify-content: center;
             align-items: center;
             color: white;
-            z-index: 100;
-            backdrop-filter: blur(5px);
+            z-index: 90;
+            backdrop-filter: blur(3px);
         }
 
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Enhanced progress bar */
         .progress-container {
             width: 80%;
-            margin-top: 15px;
+            padding: 10px;
+            margin: 10px 0;
         }
 
         .progress-bar {
             width: 100%;
-            height: 4px;
+            height: 8px;
             background: rgba(255,255,255,0.2);
-            border-radius: 2px;
+            border-radius: 4px;
             overflow: hidden;
             position: relative;
         }
@@ -94,48 +113,36 @@
             position: absolute;
             top: 0;
             left: 0;
+            box-shadow: 0 0 10px rgba(52, 152, 219, 0.5);
         }
 
         .progress-label {
             font-size: 14px;
-            margin-top: 5px;
+            margin-top: 8px;
             text-align: center;
-            color: rgba(255,255,255,0.8);
+            color: rgba(255,255,255,0.9);
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
         }
 
-        .loading-spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid rgba(255,255,255,0.3);
-            border-top: 4px solid #ffffff;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .error-message {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: #ff4444;
+        /* Enhanced calibration overlay */
+        .calibration-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
             color: white;
-            padding: 12px 24px;
-            border-radius: 8px;
-            z-index: 1000;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            max-width: 90%;
+            z-index: 100;
+            backdrop-filter: blur(5px);
+            padding: 20px;
             text-align: center;
-            animation: slideDown 0.3s ease-out;
-        }
-
-        @keyframes slideDown {
-            from { transform: translate(-50%, -100%); }
-            to { transform: translate(-50%, 0); }
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         /* Mobile-specific styles */
@@ -150,12 +157,40 @@
                 border-radius: 8px;
             }
 
-            .loading-overlay {
+            .progress-container {
+                width: 90%;
+                padding: 5px;
+            }
+
+            .progress-label {
+                font-size: 12px;
+            }
+
+            .calibration-overlay {
                 padding: 10px;
             }
 
-            .progress-container {
-                width: 90%;
+            .control-panel {
+                padding: 10px;
+            }
+
+            .control-group label {
+                font-size: 14px;
+            }
+
+            input[type="range"]::-webkit-slider-thumb {
+                width: 28px;
+                height: 28px;
+            }
+
+            select {
+                padding: 12px;
+                font-size: 14px;
+            }
+
+            .action-button {
+                padding: 12px 24px;
+                font-size: 16px;
             }
         }
 
@@ -167,6 +202,7 @@
             width: 100%;
             max-width: 640px;
             margin-top: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
 
         .control-group {
@@ -180,36 +216,40 @@
             color: #333;
         }
 
+        /* Enhanced slider style */
         input[type="range"] {
             -webkit-appearance: none;
             width: 100%;
-            height: 20px;
+            height: 30px;
             background: transparent;
             margin: 10px 0;
+            padding: 0;
         }
 
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: 28px;
-            height: 28px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             background: #3498db;
             cursor: pointer;
             border: 2px solid white;
             box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            margin-top: -14px;
         }
 
         input[type="range"]::-webkit-slider-runnable-track {
             width: 100%;
-            height: 6px;
+            height: 8px;
             background: #ddd;
-            border-radius: 3px;
+            border-radius: 4px;
         }
 
+        /* Enhanced dropdown style */
         select {
             width: 100%;
-            padding: 12px;
+            padding: 15px;
             border: 1px solid #ddd;
             border-radius: 8px;
             font-size: 16px;
@@ -221,6 +261,45 @@
             background-position: right 12px center;
             background-size: 16px;
         }
+
+        /* Action button style */
+        .action-button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 18px;
+            font-weight: bold;
+            margin: 10px 0;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.2s;
+            touch-action: manipulation;
+            box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+        }
+
+        .action-button:active {
+            transform: scale(0.95);
+            background: #2980b9;
+        }
+
+        /* Error message style */
+        .error-message {
+            background: #e74c3c;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            margin: 10px 0;
+            text-align: center;
+            font-size: 14px;
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -228,9 +307,17 @@
         <div class="video-container">
             <h2>Webcam Feed</h2>
             <video id="webcam" autoplay playsinline></video>
-            <div id="webcamLoading" class="loading-overlay" style="display: none;">
-                <div class="loading-spinner"></div>
-                <div>Initializing camera...</div>
+            <div id="calibrationOverlay" class="calibration-overlay" style="display: none;">
+                <div class="calibration-title" id="calibrationTitle"></div>
+                <div class="calibration-instruction" id="calibrationInstruction"></div>
+                <ul class="calibration-steps" id="calibrationSteps"></ul>
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div id="calibrationProgress" class="progress-fill"></div>
+                    </div>
+                    <div id="calibrationProgressLabel" class="progress-label">0%</div>
+                </div>
+                <button id="startCalibration" class="action-button">Start Calibration</button>
             </div>
         </div>
 
@@ -292,10 +379,32 @@
         </div>
     </div>
 
+    <div id="errorMessage" class="error-message"></div>
+
     <script>
         let socket;
         let isProcessingFrame = false;
+        let currentCalibrationState = 'not_started';
         
+        // Initialize webcam and socket connection
+        async function initializeWebcam() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        width: { ideal: 640 },
+                        height: { ideal: 480 },
+                        facingMode: "user"
+                    }
+                });
+                const video = document.getElementById('webcam');
+                video.srcObject = stream;
+                initializeSocket();
+            } catch (error) {
+                console.error('Error accessing webcam:', error);
+                showError('Unable to access webcam. Please check permissions.');
+            }
+        }
+
         function initializeSocket() {
             try {
                 socket = io({
@@ -314,34 +423,81 @@
 
                 socket.on('connect', () => {
                     console.log('Connected to server');
-                    hideLoading('webcam');
+                    showCalibrationOverlay();
                 });
 
                 socket.on('disconnect', () => {
                     console.log('Disconnected from server');
-                    showLoading('webcam');
+                    hideCalibrationOverlay();
+                    showError('Lost connection to server');
                 });
 
                 socket.on('processed_frame', handleProcessedFrame);
+                socket.on('calibration_instruction', handleCalibrationInstruction);
                 socket.on('error', handleError);
+
+                // Set up video frame sending
+                setupVideoFrameSending();
             } catch (error) {
                 console.error('Socket initialization error:', error);
                 showError('Failed to initialize connection. Please refresh the page.');
             }
         }
 
+        function setupVideoFrameSending() {
+            const video = document.getElementById('webcam');
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+
+            function sendVideoFrame() {
+                if (!isProcessingFrame && socket && socket.connected && video.readyState === video.HAVE_ENOUGH_DATA) {
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    ctx.drawImage(video, 0, 0);
+                    
+                    try {
+                        const imageData = canvas.toDataURL('image/jpeg', 0.7);
+                        socket.emit('video_frame', imageData);
+                        isProcessingFrame = true;
+                        
+                        // Show loading overlays
+                        document.getElementById('poseLoading').style.display = 'flex';
+                        document.getElementById('avatarLoading').style.display = 'flex';
+                    } catch (error) {
+                        console.error('Error sending video frame:', error);
+                    }
+                }
+                requestAnimationFrame(sendVideoFrame);
+            }
+
+            video.onloadedmetadata = () => {
+                sendVideoFrame();
+            };
+        }
+
         function handleProcessedFrame(data) {
+            // Update pose detection canvas
             if (data.pose_frame) {
                 updateCanvas('poseCanvas', data.pose_frame);
             }
+            
+            // Update avatar canvas
             if (data.avatar_frame) {
                 updateCanvas('avatarCanvas', data.avatar_frame);
             }
 
-            // Update progress indicators
+            // Update progress bars
             if (data.processing_progress) {
                 updateProgress('pose', data.processing_progress.pose_detection);
                 updateProgress('avatar', data.processing_progress.avatar_rendering);
+            }
+
+            // Hide loading overlays if processing is complete
+            if (data.processing_progress && 
+                data.processing_progress.pose_detection >= 100 && 
+                data.processing_progress.avatar_rendering >= 100) {
+                document.getElementById('poseLoading').style.display = 'none';
+                document.getElementById('avatarLoading').style.display = 'none';
             }
 
             isProcessingFrame = false;
@@ -351,111 +507,71 @@
             const canvas = document.getElementById(canvasId);
             const ctx = canvas.getContext('2d');
             const img = new Image();
+            
             img.onload = () => {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
             };
+            
             img.src = imageData;
         }
 
         function updateProgress(type, progress) {
             const progressBar = document.getElementById(`${type}Progress`);
             const progressLabel = document.getElementById(`${type}ProgressLabel`);
-            const progressValue = Math.min(100, Math.max(0, progress));
             
-            progressBar.style.width = `${progressValue}%`;
-            progressLabel.textContent = `${Math.round(progressValue)}%`;
-        }
-
-        function showLoading(container) {
-            document.getElementById(`${container}Loading`).style.display = 'flex';
-        }
-
-        function hideLoading(container) {
-            document.getElementById(`${container}Loading`).style.display = 'none';
+            if (progressBar && progressLabel) {
+                progressBar.style.width = `${progress}%`;
+                progressLabel.textContent = `${Math.round(progress)}%`;
+            }
         }
 
         function showError(message) {
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'error-message';
-            errorDiv.textContent = message;
-            document.body.appendChild(errorDiv);
-            setTimeout(() => errorDiv.remove(), 5000);
+            const errorElement = document.getElementById('errorMessage');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+            setTimeout(() => {
+                errorElement.style.display = 'none';
+            }, 5000);
         }
 
         function handleError(error) {
             console.error('Server error:', error);
-            showError(error.message);
+            showError(error.message || 'An error occurred');
         }
 
-        // Initialize video streaming
-        async function initializeVideo() {
-            try {
-                showLoading('webcam');
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: {
-                        width: { ideal: 640 },
-                        height: { ideal: 480 },
-                        facingMode: 'user'
-                    }
-                });
-                const video = document.getElementById('webcam');
-                video.srcObject = stream;
-                video.addEventListener('loadedmetadata', () => {
-                    hideLoading('webcam');
-                    startVideoProcessing();
-                });
-            } catch (error) {
-                console.error('Error accessing webcam:', error);
-                showError('Unable to access webcam. Please check permissions.');
-            }
-        }
+        // Initialize avatar customization controls
+        function initializeControls() {
+            document.getElementById('avatarColor').addEventListener('change', (e) => {
+                socket.emit('update_avatar', { color: e.target.value });
+            });
 
-        function startVideoProcessing() {
-            const video = document.getElementById('webcam');
-            const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            const ctx = canvas.getContext('2d');
+            document.getElementById('avatarSize').addEventListener('input', (e) => {
+                socket.emit('update_avatar', { size: e.target.value });
+            });
 
-            function processFrame() {
-                if (video.readyState === video.HAVE_ENOUGH_DATA && !isProcessingFrame) {
-                    isProcessingFrame = true;
-                    ctx.drawImage(video, 0, 0);
-                    const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-                    socket.emit('video_frame', dataUrl);
-                }
-                requestAnimationFrame(processFrame);
-            }
+            document.getElementById('lineStyle').addEventListener('change', (e) => {
+                socket.emit('update_avatar', { style: e.target.value });
+            });
 
-            processFrame();
-        }
+            document.getElementById('lineThickness').addEventListener('input', (e) => {
+                socket.emit('update_avatar', { lineThickness: e.target.value });
+            });
 
-        // Handle avatar customization
-        function setupCustomizationControls() {
-            const controls = ['avatarColor', 'avatarSize', 'lineStyle', 'lineThickness', 'jointSize'];
-            
-            controls.forEach(controlId => {
-                const element = document.getElementById(controlId);
-                ['input', 'change'].forEach(eventType => {
-                    element.addEventListener(eventType, () => {
-                        socket.emit('update_avatar', {
-                            color: document.getElementById('avatarColor').value,
-                            size: document.getElementById('avatarSize').value,
-                            style: document.getElementById('lineStyle').value,
-                            lineThickness: document.getElementById('lineThickness').value,
-                            jointSize: document.getElementById('jointSize').value
-                        });
-                    });
-                });
+            document.getElementById('jointSize').addEventListener('input', (e) => {
+                socket.emit('update_avatar', { jointSize: e.target.value });
+            });
+
+            document.getElementById('startCalibration').addEventListener('click', () => {
+                socket.emit('start_calibration');
             });
         }
 
-        // Initialize application
+        // Start everything when the page loads
         window.addEventListener('load', () => {
-            initializeSocket();
-            initializeVideo();
-            setupCustomizationControls();
+            initializeWebcam();
+            initializeControls();
         });
     </script>
 </body>
