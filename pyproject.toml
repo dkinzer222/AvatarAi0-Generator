@@ -15,4 +15,10 @@ dependencies = [
     "mediapipe>=0.10.18",
     "flask-socketio>=5.4.1",
     "eventlet",
+    "opencv-python",
+    "torch",
+    "numpy",
+    "trimesh",
+    "scipy",
+    "pyopengl",
 ]
