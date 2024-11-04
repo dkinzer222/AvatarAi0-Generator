@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html data-bs-theme="dark">
+<head>
+    <title>3D Avatar Interface</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <link href="/static/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6">
+                <div id="webcam-container"></div>
+            </div>
+            <div class="col-md-6">
+                <div id="avatar-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4/dist/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/pose.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+    <script src="/static/js/pose_tracking.js"></script>
+    <script src="/static/js/avatar.js"></script>
+    <script src="/static/js/websocket.js"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+[project]
+name = "repl-nix-fileanalyzerplus"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.11"
+dependencies = [
+    "email-validator>=2.2.0",
+    "flask>=3.0.3",
+    "flask-sqlalchemy>=3.1.1",
+    "psycopg2-binary>=2.9.10",
+    "google-cloud-speech>=2.28.0",
+    "google-cloud-dialogflow>=2.34.0",
+    "google-cloud-texttospeech>=2.21.0",
+    "pyqt5>=5.15.11",
+    "mediapipe>=0.10.18",
+    "flask-socketio>=5.4.1",
+]
