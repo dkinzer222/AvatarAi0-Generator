@@ -1,5 +1,6 @@
 {pkgs}: {
   deps = [
+    pkgs.run
     pkgs.ffmpeg
     pkgs.opencv
     pkgs.zlib
